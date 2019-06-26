@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>MQTT websocket example</title>
+  </head>
+  <body>
+
+    <h1>MQTT websocket example</h1>
+    <br />
+
+    First edit this file to define the URL, username and password of your MQTT server.
+    <br />
+    <br />
+
+    <div id="main" style="border: 1px solid #ccc; margin 20px; padding: 20px; height: 500px; overflow: auto;">⏳ Loading...<br /></div>
+
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+    <script type="text/javascript">
+      const consoleAdd = function (text) {
+        const main = document.getElementById('main');
+        main.innerHTML += text + '<br />';
+        main.scrollTop = main.scrollHeight;
+      }
+
+      // Connection to your MQTT server, using websocket protocol.
+      // Note: you have to activate websocket support on Stackhero console, in your service configuration.
+      // This example uses the library MQTT.js (https://github.com/mqttjs/MQTT.js)
+
+      // IMPORTANT: you should create a dedicated user with limited rights.
+      // Remember that any client using this page can read the source code and get those credentials!
+      // Note: on Node-RED, the websocket URL ends with "/mqtt/"
+      const url = 'wss://...';
+      const username = '<USERNAME>';
+      const password = '<PASSWORD>';
+
+
+      consoleAdd('⏳ Connecting to MQTT server ' + url + '...');
+
+      // Connecting to MQTT server using websockets
+      const client = mqtt.connect(url, { username, password });
+
+      client.on('error', function (error) {
+        consoleAdd('🚨 Error: ' + error);
+      });
+
+      client.on('close', function () {
+        consoleAdd('🔌 Connection has been closed');
+      });
+
+      client.on('reconnect', function () {
+        consoleAdd('⏳ Reconnecting...');
+      });
+
+
+
+      // On MQTT connection, we subscribe to the "presence" topic and send "Hello MQTT" to it.
+      client.on('connect', function () {
+        consoleAdd('✅ Connected!');
+
+        const topic = 'presence';
+        const message = 'Hello MQTT';
+
+        // Subscribe to topic "presence"
+        client.subscribe(topic, function (err, res) {
+          if (err) {
+            consoleAdd('🚨 Error when subscribing to topic ' + topic + ': ' + err);
+            return;
+          }
+
+          // Sending message "Hello MQTT" to topic "presence"
+          consoleAdd('✅ Sending message "' + message + '" to topic "' + topic + '"');
+          client.publish(
+            topic,
+            message,
+            { qos: 2 },
+            function(err) {
+              if (err) {
+                consoleAdd('🚨 Error when publishing to topic ' + topic + ': ' + err);
+              }
+            }
+          );
+        })
+      });
+
+      // Show messages received on every topic
+      client.on('message', function (topic, message) {
+        consoleAdd('✅ Message received from MQTT server on topic "' + topic + '": ' + message);
+      });
+    </script>
+  </body>
+</html>
